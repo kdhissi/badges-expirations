@@ -20,20 +20,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-         with:
+        with:
           fetch-depth: 0
-          
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
       - name: Compute expirations
         env:
-          # ⚠️ EXPIRATIONS définies au niveau repo (Settings > Secrets and variables > Variables)          
+          # ⚠️ EXPIRATIONS définies au niveau repo (Settings > Secrets and variables > Actions > Variables)
           EXPIRATIONS: ${{ vars.EXPIRATIONS }}
           CLAMP_NON_NEGATIVE: 'false'
           TIMEZONE: 'Europe/Paris'
-         run: |
+        run: |
           echo "EXPIRATIONS=$EXPIRATIONS"
           python scripts/gen_expirations.py
           echo "=== JSON généré ==="
@@ -48,12 +48,12 @@ jobs:
           git pull --rebase origin main || true
           git push origin main
 
- # Publie exactement le dossier ./docs généré ci-dessus
+      # Publie exactement le dossier ./docs généré ci-dessus
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./docs
-          
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -61,16 +61,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      #- uses: actions/checkout@v4
-      #- name: Setup Pages
-      #  uses: actions/configure-pages@v5
-      #- name: Upload artifact
-      #  uses: actions/upload-pages-artifact@v3
-      #  with:
-      #    path: ./docs
-      #- name: Deploy to Pages
-      #  id: deployment
-      #  uses: actions/deploy-pages@v4
       - uses: actions/configure-pages@v5
       - id: deployment
         uses: actions/deploy-pages@v4
