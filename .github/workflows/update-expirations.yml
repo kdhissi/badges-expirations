@@ -5,6 +5,11 @@ on:
     - cron: '5 3 * * *'   # Tous les jours à 03:05 UTC
   workflow_dispatch:
 
+# évite que 2 runs se marchent dessus
+concurrency:
+  group: pages-update
+  cancel-in-progress: true
+
 permissions:
   contents: write
   pages: write
@@ -15,7 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+         with:
+          fetch-depth: 0
+          
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
@@ -26,18 +33,22 @@ jobs:
           EXPIRATIONS: ${{ vars.EXPIRATIONS }}
           CLAMP_NON_NEGATIVE: 'false'
           TIMEZONE: 'Europe/Paris'
-        run: |
+         run: |
+          echo "EXPIRATIONS=$EXPIRATIONS"
           python scripts/gen_expirations.py
+          echo "=== JSON généré ==="
+          cat docs/expirations.json
 
-      - name: Commit updated JSON
+      - name: Commit & push updated JSON
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/expirations.json
           git commit -m "chore: update expirations.json" || echo "No changes"
-          git push
+          git pull --rebase origin main || true
+          git push origin main
 
-# uploade l'artefact docs/ pour le passer au job deploy
+ # Publie exactement le dossier ./docs généré ci-dessus
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
