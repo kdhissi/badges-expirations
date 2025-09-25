@@ -2,16 +2,16 @@ name: update-expirations
 
 on:
   schedule:
-    - cron: '5 3 * * *'   # Tous les jours à 03:05 UTC
+    - cron: '5 3 * * *'     # Tous les jours à 03:05 UTC
   workflow_dispatch:
 
-# évite que 2 runs se marchent dessus
+# Evite que 2 runs se chevauchent
 concurrency:
   group: pages-update
   cancel-in-progress: true
 
+# Permissions minimales
 permissions:
-  contents: write
   pages: write
   id-token: write
 
@@ -20,16 +20,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
       - name: Compute expirations
-        env:
-          # ⚠️ EXPIRATIONS définies au niveau repo (Settings > Secrets and variables > Actions > Variables)
+        env:          
           EXPIRATIONS: ${{ vars.EXPIRATIONS }}
           CLAMP_NON_NEGATIVE: 'false'
           TIMEZONE: 'Europe/Paris'
@@ -39,16 +36,7 @@ jobs:
           echo "=== JSON généré ==="
           cat docs/expirations.json
 
-      - name: Commit & push updated JSON
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/expirations.json
-          git commit -m "chore: update expirations.json" || echo "No changes"
-          git pull --rebase origin main || true
-          git push origin main
-
-      # Publie exactement le dossier ./docs généré ci-dessus
+      # Publie exactement le dossier ./docs (pas de commit/push)
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
